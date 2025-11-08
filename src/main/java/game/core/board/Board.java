@@ -11,4 +11,8 @@ public class Board {
 
     public int width() { return width; }
     public int height() { return height; }
+
+    public boolean isInside(Position p) {
+        return p.x() >= 0 && p.x() < width && p.y() >= 0 && p.y() < height;
+    }
 }
