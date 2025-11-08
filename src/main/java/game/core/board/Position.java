@@ -1,5 +1,7 @@
 package game.core.board;
 
+import java.util.Objects;
+
 public class Position {
     private final int x; // column
     private final int y; // row
@@ -12,4 +14,13 @@ public class Position {
 
     public int x() { return x; }
     public int y() { return y; }
+
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Position)) return false;
+        Position p = (Position) o;
+        return x == p.x && y == p.y;
+    }
+    @Override public int hashCode() { return Objects.hash(x, y); }
+    @Override public String toString() { return "(" + x + "," + y + ")"; }
 }
