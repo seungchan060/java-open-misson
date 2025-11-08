@@ -15,6 +15,10 @@ public class Position {
     public int x() { return x; }
     public int y() { return y; }
 
+    public int manhattanDistance(Position other) {
+        return Math.abs(this.x - other.x) + Math.abs(this.y - other.y);
+    }
+
     @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Position)) return false;
