@@ -12,4 +12,4 @@ public class Position {
 
     public int x() { return x; }
     public int y() { return y; }
-} 
+}
