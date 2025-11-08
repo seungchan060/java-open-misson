@@ -1,7 +1,11 @@
 package game.app;
 
+import game.cli.OutputView;
+import game.core.board.Board;
+
 public class GameApplication {
     public static void main(String[] args) {
-        System.out.println("Tactics Sim 시작!");
+        Board board = new Board(5, 4);
+        new OutputView().printEmptyBoard(board);
     }
 }
