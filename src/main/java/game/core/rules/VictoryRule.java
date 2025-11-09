@@ -10,6 +10,10 @@ public final class VictoryRule {
 
     public VictoryRule(int maxTurns) { this.maxTurns = maxTurns; }
 
+    public boolean isOver(int turn, List<Unit> units) {
+        return turn >= maxTurns || !hasAlive(units, TeamSide.PLAYER) || !hasAlive(units, TeamSide.ENEMY);
+    }
+
     private boolean hasAlive(List<Unit> units, TeamSide side) {
         for (Unit u : units) if (!u.isDead() && u.side() == side) return true;
         return false;
