@@ -25,4 +25,12 @@ public final class Stats {
     public int def() { return def; }
     public int crit() { return crit; }
     public int mana() { return mana; }
+
+    /** 방어력을 고려해 피해를 적용 (최소 1 피해) */
+    public void applyDamage(int rawDamage) {
+        int dmg = Math.max(1, rawDamage - def);
+        hp = Math.max(0, hp - dmg);
+    }
+
+    public boolean isDead() { return hp == 0; }
 }
