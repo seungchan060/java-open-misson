@@ -23,4 +23,10 @@ public final class Character {
     public TeamSide side() { return side; }
     public Stats stats() { return stats; }
     public Position position() { return position; }
+
+    public void moveTo(Position p) {
+        this.position = Objects.requireNonNull(p);
+    }
+
+    public boolean isDead() { return stats.isDead(); }
 }
