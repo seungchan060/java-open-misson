@@ -3,14 +3,14 @@ package game.core.entity;
 import game.core.board.Position;
 import java.util.Objects;
 
-public final class Character {
+public final class Unit {
     private final String name;
     private final Role role;
     private final TeamSide side;
     private final Stats stats;
     private Position position;
 
-    public Character(String name, Role role, TeamSide side, Stats stats, Position position) {
+    public Unit(String name, Role role, TeamSide side, Stats stats, Position position) {
         this.name = Objects.requireNonNull(name);
         this.role = Objects.requireNonNull(role);
         this.side = Objects.requireNonNull(side);
