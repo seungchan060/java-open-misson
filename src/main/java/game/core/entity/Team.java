@@ -20,4 +20,16 @@ public final class Team {
 
     public boolean canAddToField() { return field.size() < MAX_FIELD; }
     public boolean canAddToBench() { return bench.size() < MAX_BENCH; }
+
+    public void addToField(Character c) {
+        if (!canAddToField()) throw new IllegalStateException("필드가 가득 찼습니다.");
+        if (c.side() != side) throw new IllegalArgumentException("팀 사이드가 다릅니다.");
+        field.add(c);
+    }
+
+    public void addToBench(Character c) {
+        if (!canAddToBench()) throw new IllegalStateException("벤치가 가득 찼습니다.");
+        if (c.side() != side) throw new IllegalArgumentException("팀 사이드가 다릅니다.");
+        bench.add(c);
+    }
 }
