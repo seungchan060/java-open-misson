@@ -46,8 +46,11 @@ public final class EnemyAiService {
             Direction[] order = stepOrder(e, t);
             for (Direction d : order) {
                 if (d == null) continue;
-                movement.move(board, all, enemy, d);
-                break;
+                Position next = Position.of(enemy.position().x() + d.dx, enemy.position().y() + d.dy);
+                if (board.isInside(next) && all.stream().noneMatch(u -> !u.isDead() && u.position().equals(next))) {
+                    movement.move(board, all, enemy, d);
+                    break;
+                }
             }
         }
     }
@@ -55,8 +58,17 @@ public final class EnemyAiService {
     private Direction[] stepOrder(Position from, Position to) {
         int dx = Integer.compare(to.x(), from.x());
         int dy = Integer.compare(to.y(), from.y());
-        Direction stepX = dx == 0 ? null : (dx > 0 ? Direction.RIGHT : Direction.LEFT);
-        Direction stepY = dy == 0 ? null : (dy > 0 ? Direction.DOWN  : Direction.UP);
-        return new Direction[]{ stepX, stepY };
+
+        Direction primaryX = dx == 0 ? null : (dx > 0 ? Direction.RIGHT : Direction.LEFT);
+        Direction primaryY = dy == 0 ? null : (dy > 0 ? Direction.DOWN : Direction.UP);
+
+        // 기본 이동 우선순위: 목표에 가까워지는 방향 → 못하면 다른 방향 → 그래도 못하면 제자리
+        return new Direction[]{
+                primaryX, primaryY,
+                (dx != 0 ? (dy > 0 ? Direction.DOWN : Direction.UP)
+                        : (dx > 0 ? Direction.RIGHT : Direction.LEFT)),
+                (dy != 0 ? (dx > 0 ? Direction.RIGHT : Direction.LEFT)
+                        : (dy > 0 ? Direction.DOWN : Direction.UP))
+        };
     }
 }
