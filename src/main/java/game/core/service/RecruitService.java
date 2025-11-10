@@ -25,4 +25,14 @@ public final class RecruitService {
 
         return new Unit(r.name(), r, TeamSide.PLAYER, s, Position.of(-1, -1)); // 위치는 나중 배치
     }
+
+    public boolean placeOnBoard(Board board, List<Unit> units, Unit u, Position pos) {
+        if (!board.isInside(pos)) return false;
+        if (pos.y() != board.height() - 1) return false;
+        boolean occupied = units.stream().anyMatch(e -> !e.isDead() && e.position().equals(pos));
+        if (occupied) return false;
+        u.moveTo(pos);
+        units.add(u);
+        return true;
+    }
 }
