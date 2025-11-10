@@ -30,6 +30,37 @@ public final class BattleEngine {
         this.fatigue = new FatigueRule();
     }
 
+    public void run() {
+        int turn = 1; // 라운드 번호
+
+        while (true) {
+            // Player Turn
+            view.printBoard(board, units);
+            System.out.printf("=== Turn %d : PLAYER ===%n", turn);
+            if (!playerTurn()) break;
+            if (victory.isOver(turn, units)) break;
+
+            // Enemy Turn
+            System.out.printf("=== Turn %d : ENEMY ===%n", turn);
+            enemyAi.takeTurn(board, units);
+            if (victory.isOver(turn, units)) break;
+
+            // End of Turn rules
+            fatigue.applyEndOfTurn(turn, units);
+            turn++;
+        }
+
+        view.printBoard(board, units);
+        TeamSide w = victory.winner(Integer.MAX_VALUE, units);
+        if (w == null) {
+            System.out.println("무승부입니다.");
+        } else if (w == TeamSide.PLAYER) {
+            System.out.println("플레이어 승리!");
+        } else {
+            System.out.println("패배했습니다…");
+        }
+    }
+
     private boolean playerTurn() {
         String sel = input.input("행동할 아군 유닛 좌표 (예: 2,3) 또는 exit:");
         if (sel.equalsIgnoreCase("exit")) return false;
