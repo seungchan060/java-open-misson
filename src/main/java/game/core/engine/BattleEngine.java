@@ -2,11 +2,16 @@ package game.core.engine;
 
 import game.cli.InputView;
 import game.cli.OutputView;
-import game.core.board.*;
-import game.core.entity.*;
+import game.core.board.Direction;
+import game.core.board.Board;
+import game.core.board.Position;
+import game.core.entity.TeamSide;
+import game.core.entity.Unit;
 import game.core.rules.FatigueRule;
 import game.core.rules.VictoryRule;
-import game.core.service.*;
+import game.core.service.AttackService;
+import game.core.service.EnemyAiService;
+import game.core.service.MovementService;
 
 import java.util.List;
 
@@ -15,6 +20,7 @@ public final class BattleEngine {
     private final List<Unit> units;
     private final OutputView view;
     private final InputView input;
+
     private final MovementService movement;
     private final AttackService attack;
     private final EnemyAiService enemyAi;
@@ -22,22 +28,27 @@ public final class BattleEngine {
     private final FatigueRule fatigue;
 
     public BattleEngine(Board board, List<Unit> units, OutputView view, InputView input) {
-        this.board = board; this.units = units; this.view = view; this.input = input;
+        this.board = board;
+        this.units = units;
+        this.view = view;
+        this.input = input;
+
         this.movement = new MovementService();
         this.attack = new AttackService();
         this.enemyAi = new EnemyAiService(movement, attack);
-        this.victory = new VictoryRule(20); // 턴 한도 20
+        this.victory = new VictoryRule(20); // 턴 한도
         this.fatigue = new FatigueRule();
     }
 
     public void run() {
-        int turn = 1; // 라운드 번호
+        int turn = 1;
 
         while (true) {
             // Player Turn
             view.printBoard(board, units);
             System.out.printf("=== Turn %d : PLAYER ===%n", turn);
-            if (!playerTurn()) break;
+            boolean keep = playerSingleAction();
+            if (!keep) break;
             if (victory.isOver(turn, units)) break;
 
             // Enemy Turn
@@ -61,7 +72,8 @@ public final class BattleEngine {
         }
     }
 
-    private boolean playerTurn() {
+    // 플레이어가 이번 턴에 아군 유닛 1명만 선택해 1회 행동(move/atk)
+    private boolean playerSingleAction() {
         String sel = input.input("행동할 아군 유닛 좌표 (예: 2,3) 또는 exit:");
         if (sel.equalsIgnoreCase("exit")) return false;
 
@@ -84,7 +96,7 @@ public final class BattleEngine {
                 default -> null;
             };
             if (d == null) { System.out.println("방향 입력 오류"); return true; }
-            new MovementService().move(board, units, me, d);
+            movement.move(board, units, me, d);
         } else if (act.equalsIgnoreCase("atk")) {
             String tgt = input.input("공격 대상 좌표 (예: 2,1):");
             Position tp;
@@ -93,11 +105,13 @@ public final class BattleEngine {
 
             Unit enemy = findUnitAt(tp, TeamSide.ENEMY);
             if (enemy == null) { System.out.println("해당 위치에 적이 없습니다."); return true; }
+
+            // 사거리 1칸
             if (me.position().manhattanDistance(enemy.position()) > 1) {
                 System.out.println("사거리 밖!");
                 return true;
             }
-            new AttackService().basicAttack(me, enemy);
+            attack.basicAttack(me, enemy);
         } else {
             System.out.println("알 수 없는 행동");
         }
