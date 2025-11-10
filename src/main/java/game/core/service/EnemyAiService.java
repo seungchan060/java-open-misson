@@ -6,12 +6,50 @@ import game.core.board.Position;
 import game.core.entity.TeamSide;
 import game.core.entity.Unit;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
 public final class EnemyAiService {
     private final MovementService movement;
     private final AttackService attack;
 
     public EnemyAiService(MovementService movement, AttackService attack) {
         this.movement = movement; this.attack = attack;
+    }
+
+    public void takeTurn(Board board, List<Unit> all) {
+        for (Unit enemy : all) {
+            if (enemy.isDead() || enemy.side() != TeamSide.ENEMY) continue;
+
+            // 인접한 플레이어 중 HP 낮은 대상 우선
+            Optional<Unit> adj = all.stream()
+                    .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER)
+                    .filter(u -> enemy.position().manhattanDistance(u.position()) == 1)
+                    .min(Comparator.comparingInt(u -> u.stats().hp()));
+
+            if (adj.isPresent()) {
+                attack.basicAttack(enemy, adj.get());
+                continue;
+            }
+
+            // 가장 가까운 플레이어에게 접근
+            Optional<Unit> nearest = all.stream()
+                    .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER)
+                    .min(Comparator.comparingInt(u -> enemy.position().manhattanDistance(u.position())));
+
+            if (nearest.isEmpty()) return;
+
+            // 한 칸 이동
+            Position e = enemy.position();
+            Position t = nearest.get().position();
+            Direction[] order = stepOrder(e, t);
+            for (Direction d : order) {
+                if (d == null) continue;
+                movement.move(board, all, enemy, d);
+                break;
+            }
+        }
     }
 
     private Direction[] stepOrder(Position from, Position to) {
