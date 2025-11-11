@@ -28,7 +28,7 @@ public final class BattleEngine {
     private final EnemyAiService enemyAi;
     private final VictoryRule victory;
     private final FatigueRule fatigue;
-    
+
     private final Bench bench = new Bench(3);
     private final RecruitService recruit = new RecruitService();
 

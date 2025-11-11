@@ -15,22 +15,23 @@ public final class VictoryRule {
     }
 
     public TeamSide winner(int turn, List<Unit> units) {
-        boolean p = hasAlive(units, TeamSide.PLAYER);
-        boolean e = hasAlive(units, TeamSide.ENEMY);
-        if (p && !e) return TeamSide.PLAYER;
-        if (!p && e) return TeamSide.ENEMY;
-        if (p && e) return null; // 아직 진행중
+        boolean pAlive = hasAlive(units, TeamSide.PLAYER);
+        boolean eAlive = hasAlive(units, TeamSide.ENEMY);
 
-        // 턴 한도 또는 동시 전멸 -> 타이브레이커: 생존 수 -> 총 HP
-        int pAlive = countAlive(units, TeamSide.PLAYER);
-        int eAlive = countAlive(units, TeamSide.ENEMY);
-        if (pAlive != eAlive) return pAlive > eAlive ? TeamSide.PLAYER : TeamSide.ENEMY;
+        if (pAlive && !eAlive) return TeamSide.PLAYER;
+        if (!pAlive && eAlive) return TeamSide.ENEMY;
+
+        if (turn < maxTurns) return null;
+
+        int pCount = countAlive(units, TeamSide.PLAYER);
+        int eCount = countAlive(units, TeamSide.ENEMY);
+        if (pCount != eCount) return pCount > eCount ? TeamSide.PLAYER : TeamSide.ENEMY;
 
         int pHp = totalHp(units, TeamSide.PLAYER);
         int eHp = totalHp(units, TeamSide.ENEMY);
         if (pHp != eHp) return pHp > eHp ? TeamSide.PLAYER : TeamSide.ENEMY;
-
-        return null; // 완전 무승부
+        
+        return null;
     }
 
     private boolean hasAlive(List<Unit> units, TeamSide side) {
