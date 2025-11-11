@@ -30,7 +30,7 @@ public final class VictoryRule {
         int pHp = totalHp(units, TeamSide.PLAYER);
         int eHp = totalHp(units, TeamSide.ENEMY);
         if (pHp != eHp) return pHp > eHp ? TeamSide.PLAYER : TeamSide.ENEMY;
-        
+
         return null;
     }
 
