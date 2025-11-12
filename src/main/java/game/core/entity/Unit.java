@@ -10,6 +10,8 @@ public final class Unit {
     private final Stats stats;
     private Position position;
 
+    private int skillCooldownRemaining = 0;
+
     public Unit(String name, Role role, TeamSide side, Stats stats, Position position) {
         this.name = Objects.requireNonNull(name);
         this.role = Objects.requireNonNull(role);
@@ -29,4 +31,18 @@ public final class Unit {
     }
 
     public boolean isDead() { return stats.isDead(); }
+
+    public boolean isSkillReady(game.core.skill.Skill skill) {
+        return skillCooldownRemaining == 0 && stats.hasMana(skill.mpCost());
+    }
+
+    // 스킬 사용 시작(쿨다운 부여)
+    public void startSkillCooldown(game.core.skill.Skill skill) {
+        this.skillCooldownRemaining = Math.max(this.skillCooldownRemaining, skill.cooldown());
+    }
+
+    // 턴 종료 시 쿨다운 1 감소
+    public void tickCooldown() {
+        if (skillCooldownRemaining > 0) skillCooldownRemaining--;
+    }
 }
