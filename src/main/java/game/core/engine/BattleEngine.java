@@ -65,6 +65,9 @@ public final class BattleEngine {
             // End of Turn rules
             fatigue.applyEndOfTurn(turn, units);
 
+            // 여기서 모든 유닛 스킬 쿨다운 1 감소
+            for (var u : units) u.tickCooldown();
+
             // 3턴마다 리쿠르팅
             if (turn % 3 == 0) {
                 recruitPhase();
@@ -124,8 +127,14 @@ public final class BattleEngine {
             attack.basicAttack(me, enemy);
 
         } else if (act.equalsIgnoreCase("skill")) {
-            Skill sk = me.role().skill();
-            System.out.println("사용 스킬: " + sk.name());
+            var sk = me.role().skill();
+            System.out.println("사용 스킬: " + sk.name() + " (MP:" + sk.mpCost() + ", CD:" + sk.cooldown() + ")");
+
+            if (!me.isSkillReady(sk)) {
+                System.out.println("스킬 사용 불가 (쿨다운 또는 MP 부족)");
+                return true;
+            }
+
             String tgt = input.input("스킬 대상 좌표 (예: x,y):");
             Position tp;
             try { tp = Position.parse(tgt); }
@@ -135,8 +144,18 @@ public final class BattleEngine {
                 System.out.println("스킬 사용 불가 (사거리/대상 조건)");
                 return true;
             }
-            sk.use(me, board, units, tp);
 
+            // MP 소비 시도
+            if (!me.stats().consumeMana(sk.mpCost())) {
+                System.out.println("MP가 부족합니다.");
+                return true;
+            }
+
+            // 스킬 발동 + 쿨다운 부여
+            sk.use(me, board, units, tp);
+            me.startSkillCooldown(sk);
+
+            return true;
         } else {
             System.out.println("알 수 없는 행동");
         }
