@@ -1,13 +1,12 @@
 package game.core.entity;
 
-import game.core.skill.Skill;
-import game.core.skill.ShieldBash;
+import game.core.skill.*;
 
 public enum Role {
     KNIGHT(new ShieldBash()),
     ROGUE(noSkill()),
-    ARCHER(noSkill()),  // 추후 PiercingShot으로 교체 예정
-    MAGE(noSkill()),    // 추후 Fireball으로 교체 예정
+    ARCHER(new PiercingShot()),
+    MAGE(new Fireball()),
     MONK(noSkill()),
     TANK(noSkill());
 
