@@ -1,6 +1,7 @@
 package game.core.entity;
 
 import game.core.board.Position;
+
 import java.util.Objects;
 
 public final class Unit {
@@ -11,6 +12,9 @@ public final class Unit {
     private Position position;
 
     private int skillCooldownRemaining = 0;
+
+    // 은신 지속 턴
+    private int stealthTurnRemaining = 0;
 
     public Unit(String name, Role role, TeamSide side, Stats stats, Position position) {
         this.name = Objects.requireNonNull(name);
@@ -32,16 +36,29 @@ public final class Unit {
 
     public boolean isDead() { return stats.isDead(); }
 
+    // 은신 여부 확인
+    public boolean isStealthed() {
+        return stealthTurnRemaining > 0;
+    }
+
+    // 은신 적용
+    public void applyStealth(int duration) {
+        stealthTurnRemaining = duration;
+    }
+
+    // 턴 종료마다 은신 감소
+    public void tickStealth() {
+        if (stealthTurnRemaining > 0) stealthTurnRemaining--;
+    }
+
     public boolean isSkillReady(game.core.skill.Skill skill) {
         return skillCooldownRemaining == 0 && stats.hasMana(skill.mpCost());
     }
 
-    // 스킬 사용 시작(쿨다운 부여)
     public void startSkillCooldown(game.core.skill.Skill skill) {
         this.skillCooldownRemaining = Math.max(this.skillCooldownRemaining, skill.cooldown());
     }
 
-    // 턴 종료 시 쿨다운 1 감소
     public void tickCooldown() {
         if (skillCooldownRemaining > 0) skillCooldownRemaining--;
     }
