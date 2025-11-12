@@ -65,8 +65,11 @@ public final class BattleEngine {
             // End of Turn rules
             fatigue.applyEndOfTurn(turn, units);
 
-            // 여기서 모든 유닛 스킬 쿨다운 1 감소
-            for (var u : units) u.tickCooldown();
+            // 모든 유닛: 스킬 쿨다운 / 은신 지속 감소
+            for (var u : units) {
+                u.tickCooldown();
+                u.tickStealth();
+            }
 
             // 3턴마다 리쿠르팅
             if (turn % 3 == 0) {
@@ -111,8 +114,10 @@ public final class BattleEngine {
             };
             if (d == null) { System.out.println("방향 입력 오류"); return true; }
             movement.move(board, units, me, d);
+            return true;
+        }
 
-        } else if (act.equalsIgnoreCase("atk")) {
+        if (act.equalsIgnoreCase("atk")) {
             String tgt = input.input("공격 대상 좌표 (예: 2,1):");
             Position tp;
             try { tp = Position.parse(tgt); }
@@ -125,27 +130,48 @@ public final class BattleEngine {
                 return true;
             }
             attack.basicAttack(me, enemy);
+            return true;
+        }
 
-        } else if (act.equalsIgnoreCase("skill")) {
-            var sk = me.role().skill();
-            System.out.println("사용 스킬: " + sk.name() + " (MP:" + sk.mpCost() + ", CD:" + sk.cooldown() + ")");
+        if (act.equalsIgnoreCase("skill")) {
+            // 스킬 목록 출력 및 선택
+            var skills = me.role().skills();
+            if (skills.isEmpty()) {
+                System.out.println("이 역할은 사용 가능한 스킬이 없습니다.");
+                return true;
+            }
+            System.out.println("사용할 스킬 번호를 선택하세요:");
+            for (int i = 0; i < skills.size(); i++) {
+                Skill s = skills.get(i);
+                System.out.printf("%d) %s (MP:%d, CD:%d)%n", i + 1, s.name(), s.mpCost(), s.cooldown());
+            }
+            String no = input.input("번호:");
+            int idx;
+            try { idx = Integer.parseInt(no) - 1; }
+            catch (Exception e) { System.out.println("번호 형식 오류"); return true; }
+            if (idx < 0 || idx >= skills.size()) { System.out.println("범위를 벗어났습니다."); return true; }
 
+            Skill sk = skills.get(idx);
             if (!me.isSkillReady(sk)) {
                 System.out.println("스킬 사용 불가 (쿨다운 또는 MP 부족)");
                 return true;
             }
 
-            String tgt = input.input("스킬 대상 좌표 (예: x,y):");
-            Position tp;
-            try { tp = Position.parse(tgt); }
-            catch (Exception e) { System.out.println("좌표 형식 오류"); return true; }
+            // 타겟 입력 (Smoke Bomb은 빈 입력 허용)
+            String tgt = input.input("스킬 대상 좌표 (예: x,y) / Smoke Bomb은 Enter:");
+            Position tp = null;
+            if (tgt != null && !tgt.trim().isEmpty()) {
+                try { tp = Position.parse(tgt); }
+                catch (Exception e) { System.out.println("좌표 형식 오류"); return true; }
+            }
+            if (tp == null) tp = me.position(); // 자기대상/무시형 스킬 대비
 
             if (!sk.canUse(me, board, units, tp)) {
                 System.out.println("스킬 사용 불가 (사거리/대상 조건)");
                 return true;
             }
 
-            // MP 소비 시도
+            // MP 소비
             if (!me.stats().consumeMana(sk.mpCost())) {
                 System.out.println("MP가 부족합니다.");
                 return true;
@@ -154,11 +180,10 @@ public final class BattleEngine {
             // 스킬 발동 + 쿨다운 부여
             sk.use(me, board, units, tp);
             me.startSkillCooldown(sk);
-
             return true;
-        } else {
-            System.out.println("알 수 없는 행동");
         }
+
+        System.out.println("알 수 없는 행동");
         return true;
     }
 
