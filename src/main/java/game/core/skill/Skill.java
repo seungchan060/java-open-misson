@@ -8,6 +8,10 @@ import java.util.List;
 
 public interface Skill {
     String name();
+
+    default int mpCost() { return 0; }
+    default int cooldown() { return 0; }
+
     boolean canUse(Unit caster, Board board, List<Unit> units, Position target);
     void use(Unit caster, Board board, List<Unit> units, Position target);
 }
