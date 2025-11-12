@@ -14,6 +14,7 @@ import game.core.service.AttackService;
 import game.core.service.EnemyAiService;
 import game.core.service.MovementService;
 import game.core.service.RecruitService;
+import game.core.skill.Skill;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public final class BattleEngine {
         this.movement = new MovementService();
         this.attack = new AttackService();
         this.enemyAi = new EnemyAiService(movement, attack);
-        this.victory = new VictoryRule(20);
+        this.victory = new VictoryRule(20); // 턴 한도
         this.fatigue = new FatigueRule();
     }
 
@@ -49,19 +50,22 @@ public final class BattleEngine {
         int turn = 1;
 
         while (true) {
+            // Player Turn
             view.printBoard(board, units);
             System.out.printf("=== Turn %d : PLAYER ===%n", turn);
             boolean keep = playerSingleAction();
             if (!keep) break;
             if (victory.isOver(turn, units)) break;
 
+            // Enemy Turn
             System.out.printf("=== Turn %d : ENEMY ===%n", turn);
             enemyAi.takeTurn(board, units);
             if (victory.isOver(turn, units)) break;
 
+            // End of Turn rules
             fatigue.applyEndOfTurn(turn, units);
 
-            // 3턴마다 유닛 리쿠르팅
+            // 3턴마다 리쿠르팅
             if (turn % 3 == 0) {
                 recruitPhase();
             }
@@ -92,7 +96,7 @@ public final class BattleEngine {
         if (me == null) { System.out.println("해당 위치에 아군 유닛이 없습니다."); return true; }
         if (me.isDead()) { System.out.println("사망한 유닛입니다."); return true; }
 
-        String act = input.input("행동 (move / atk):");
+        String act = input.input("행동 (move / atk / skill):");
         if (act.equalsIgnoreCase("move")) {
             String dir = input.input("방향 (W/A/S/D):");
             Direction d = switch (dir.toUpperCase()) {
@@ -104,6 +108,7 @@ public final class BattleEngine {
             };
             if (d == null) { System.out.println("방향 입력 오류"); return true; }
             movement.move(board, units, me, d);
+
         } else if (act.equalsIgnoreCase("atk")) {
             String tgt = input.input("공격 대상 좌표 (예: 2,1):");
             Position tp;
@@ -112,12 +117,26 @@ public final class BattleEngine {
 
             Unit enemy = findUnitAt(tp, TeamSide.ENEMY);
             if (enemy == null) { System.out.println("해당 위치에 적이 없습니다."); return true; }
-
             if (me.position().manhattanDistance(enemy.position()) > 1) {
                 System.out.println("사거리 밖!");
                 return true;
             }
             attack.basicAttack(me, enemy);
+
+        } else if (act.equalsIgnoreCase("skill")) {
+            Skill sk = me.role().skill();
+            System.out.println("사용 스킬: " + sk.name());
+            String tgt = input.input("스킬 대상 좌표 (예: x,y):");
+            Position tp;
+            try { tp = Position.parse(tgt); }
+            catch (Exception e) { System.out.println("좌표 형식 오류"); return true; }
+
+            if (!sk.canUse(me, board, units, tp)) {
+                System.out.println("스킬 사용 불가 (사거리/대상 조건)");
+                return true;
+            }
+            sk.use(me, board, units, tp);
+
         } else {
             System.out.println("알 수 없는 행동");
         }
@@ -132,7 +151,6 @@ public final class BattleEngine {
         return null;
     }
 
-    // 리쿠르팅 UI
     private void recruitPhase() {
         System.out.println("새로운 유닛을 영입할 수 있습니다!");
 
