@@ -9,6 +9,8 @@ import java.util.List;
 public class ShieldBash implements Skill {
     @Override
     public String name() { return "Shield Bash"; }
+    @Override public int mpCost() { return 1; }
+    @Override public int cooldown() { return 1; }
 
     @Override
     public boolean canUse(Unit caster, Board board, List<Unit> units, Position target) {

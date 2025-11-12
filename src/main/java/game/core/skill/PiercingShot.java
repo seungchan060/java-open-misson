@@ -12,6 +12,8 @@ public class PiercingShot implements Skill {
 
     @Override
     public String name() { return "Piercing Shot"; }
+    @Override public int mpCost() { return 2; }
+    @Override public int cooldown() { return 1; }
 
     @Override
     public boolean canUse(Unit caster, Board board, List<Unit> units, Position target) {

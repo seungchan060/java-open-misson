@@ -11,6 +11,8 @@ public class Fireball implements Skill {
 
     @Override
     public String name() { return "Fireball"; }
+    @Override public int mpCost() { return 3; }
+    @Override public int cooldown() { return 2; }
 
     @Override
     public boolean canUse(Unit caster, Board board, List<Unit> units, Position target) {
