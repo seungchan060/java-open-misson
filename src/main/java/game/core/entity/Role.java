@@ -4,7 +4,7 @@ import game.core.skill.*;
 
 public enum Role {
     KNIGHT(new ShieldBash()),
-    ROGUE(noSkill()),
+    ROGUE(new Backstab()),
     ARCHER(new PiercingShot()),
     MAGE(new Fireball()),
     MONK(noSkill()),
