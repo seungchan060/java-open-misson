@@ -10,10 +10,7 @@ import game.core.entity.TeamSide;
 import game.core.entity.Unit;
 import game.core.rules.FatigueRule;
 import game.core.rules.VictoryRule;
-import game.core.service.AttackService;
-import game.core.service.EnemyAiService;
-import game.core.service.MovementService;
-import game.core.service.RecruitService;
+import game.core.service.*;
 import game.core.skill.Skill;
 
 import java.util.List;
@@ -50,42 +47,40 @@ public final class BattleEngine {
         int turn = 1;
 
         while (true) {
+            ContextUnitsHolder.open(units);
+
             view.printBoard(board, units);
             System.out.printf("=== Turn %d : PLAYER ===%n", turn);
             boolean keep = playerSingleAction();
-            if (!keep) break;
-            if (victory.isOver(turn, units)) break;
+            if (!keep) { ContextUnitsHolder.close(); break; }
+            if (victory.isOver(turn, units)) { ContextUnitsHolder.close(); break; }
 
             System.out.printf("=== Turn %d : ENEMY ===%n", turn);
             enemyAi.takeTurn(board, units);
-            if (victory.isOver(turn, units)) break;
+            if (victory.isOver(turn, units)) { ContextUnitsHolder.close(); break; }
 
             fatigue.applyEndOfTurn(turn, units);
 
-            // 쿨다운/은신/도발 지속 감소
             for (var u : units) {
                 u.tickCooldown();
                 u.tickStealth();
                 u.tickTaunt();
+                u.tickBodyBlock();
             }
 
-            // 3턴마다 리쿠르팅
             if (turn % 3 == 0) {
                 recruitPhase();
             }
 
+            ContextUnitsHolder.close();
             turn++;
         }
 
         view.printBoard(board, units);
         TeamSide w = victory.winner(Integer.MAX_VALUE, units);
-        if (w == null) {
-            System.out.println("무승부입니다.");
-        } else if (w == TeamSide.PLAYER) {
-            System.out.println("플레이어 승리!");
-        } else {
-            System.out.println("패배했습니다…");
-        }
+        if (w == null)      System.out.println("무승부입니다.");
+        else if (w == TeamSide.PLAYER) System.out.println("플레이어 승리!");
+        else                 System.out.println("패배했습니다…");
     }
 
     private boolean playerSingleAction() {
