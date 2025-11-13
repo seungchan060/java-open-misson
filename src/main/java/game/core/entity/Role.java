@@ -10,7 +10,7 @@ public enum Role {
     ROGUE(new Backstab(), new SmokeBomb()),
     ARCHER(new PiercingShot()),
     MAGE(new Fireball()),
-    MONK(),
+    MONK(),T
     TANK(new Taunt());
 
     private final List<Skill> skills;
