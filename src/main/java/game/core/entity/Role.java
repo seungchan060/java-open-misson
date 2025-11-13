@@ -11,7 +11,7 @@ public enum Role {
     ARCHER(new PiercingShot()),
     MAGE(new Fireball()),
     MONK(),
-    TANK(new Taunt());
+    TANK(new Taunt(), new BodyBlock());
 
     private final List<Skill> skills;
 
