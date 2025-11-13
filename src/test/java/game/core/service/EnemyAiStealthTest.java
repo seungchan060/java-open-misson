@@ -31,7 +31,6 @@ class EnemyAiStealthTest {
 
         ai.takeTurn(b, all);
 
-        // 유일한 플레이어가 은신 중 → AI는 아무것도 못함
         assertThat(enemy.position()).isEqualTo(before);
         assertThat(stealthed.stats().hp()).isEqualTo(20); // 피해 없음
     }
@@ -45,18 +44,18 @@ class EnemyAiStealthTest {
 
         Unit stealthed = new Unit("Rogue", Role.ROGUE, TeamSide.PLAYER,
                 Stats.of(20, 5, 0, 0, 5), Position.of(2,2));
+        stealthed.applyStealth(1);
+
         Unit exposed = new Unit("Knight", Role.KNIGHT, TeamSide.PLAYER,
-                Stats.of(30, 4, 0, 0, 0), Position.of(2,3));
+                Stats.of(30, 4, 0, 0, 0), Position.of(3,1));
         Unit enemy = new Unit("Mob", Role.KNIGHT, TeamSide.ENEMY,
                 Stats.of(20, 2, 0, 0, 0), Position.of(2,1));
 
-        stealthed.applyStealth(1);
-
         List<Unit> all = new ArrayList<>(List.of(stealthed, exposed, enemy));
 
-        ai.takeTurn(b, all); // 인접한 exposed를 우선 공격
+        ai.takeTurn(b, all);
 
         assertThat(exposed.stats().hp()).isLessThan(30);
-        assertThat(stealthed.stats().hp()).isEqualTo(20); // 은신 대상은 안전
+        assertThat(stealthed.stats().hp()).isEqualTo(20);
     }
 }
