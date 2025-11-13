@@ -34,23 +34,22 @@ public final class EnemyAiService {
     }
 
     private void actSingleEnemy(Board board, List<Unit> all, Unit enemy) {
+        // 도발 대상 우선
         Optional<Unit> tauntTarget = all.stream()
                 .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && u.isTaunting())
                 .findFirst();
 
         if (tauntTarget.isPresent()) {
             Unit t = tauntTarget.get();
-            // 인접하면 즉시 공격
             if (enemy.position().manhattanDistance(t.position()) == 1) {
                 attack.basicAttack(enemy, t);
-                return;
+            } else {
+                moveOneStepToward(board, all, enemy, t.position());
             }
-            // 인접 아니면 도발 대상에게 접근
-            moveOneStepToward(board, all, enemy, t.position());
             return;
         }
 
-        // 은신 제외, 인접한 대상 우선
+        // 일반 로직: 은신 제외, 인접 우선
         Optional<Unit> adjacent = all.stream()
                 .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && !u.isStealthed())
                 .filter(u -> enemy.position().manhattanDistance(u.position()) == 1)
@@ -61,6 +60,7 @@ public final class EnemyAiService {
             return;
         }
 
+        // 가장 가까운 비은신 플레이어에게 접근
         Optional<Unit> nearest = all.stream()
                 .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && !u.isStealthed())
                 .min(Comparator.comparingInt(u -> enemy.position().manhattanDistance(u.position())));
@@ -69,28 +69,53 @@ public final class EnemyAiService {
         moveOneStepToward(board, all, enemy, nearest.get().position());
     }
 
+    // 목표를 향해 한 칸 이동 직진이 막히면 수직/수평 우회도 시도
     private void moveOneStepToward(Board board, List<Unit> all, Unit mover, Position to) {
         Position from = mover.position();
-        Direction[] tryDirs = stepOrder(from, to);
-        for (Direction d : tryDirs) {
+        for (Direction d : stepOrderWithDetour(from, to)) {
             if (d == null) continue;
             Position next = Position.of(from.x() + d.dx, from.y() + d.dy);
             boolean inside = board.isInside(next);
             boolean occupied = all.stream().anyMatch(u -> !u.isDead() && u.position().equals(next));
             if (inside && !occupied) {
                 movement.move(board, all, mover, d);
-                break;
+                return;
             }
         }
     }
 
-    private Direction[] stepOrder(Position from, Position to) {
-        int dx = Integer.compare(to.x(), from.x());
-        int dy = Integer.compare(to.y(), from.y());
-        Direction primaryX = dx == 0 ? null : (dx > 0 ? Direction.RIGHT : Direction.LEFT);
-        Direction primaryY = dy == 0 ? null : (dy > 0 ? Direction.DOWN : Direction.UP);
-        Direction alt1 = (primaryY != null) ? primaryY : (primaryX != null ? primaryX : null);
-        Direction alt2 = (primaryX != null) ? primaryX : (primaryY != null ? primaryY : null);
-        return new Direction[] { primaryX, primaryY, alt1, alt2 };
+    private Direction[] stepOrderWithDetour(Position from, Position to) {
+        int dx = Integer.compare(to.x(), from.x()); // -1,0,1
+        int dy = Integer.compare(to.y(), from.y()); // -1,0,1
+
+        Direction goX = dx == 0 ? null : (dx > 0 ? Direction.RIGHT : Direction.LEFT);
+        Direction backX = dx == 0 ? null : (dx > 0 ? Direction.LEFT : Direction.RIGHT);
+
+        Direction goY = dy == 0 ? null : (dy > 0 ? Direction.DOWN : Direction.UP);
+        Direction backY = dy == 0 ? null : (dy > 0 ? Direction.UP : Direction.DOWN);
+
+        // 같은 행
+        if (dy == 0 && goX != null) {
+            return new Direction[] {
+                    goX,             // 직진
+                    Direction.UP,    // 우회
+                    Direction.DOWN,  // 우회
+                    backX            // 마지막 수단(멀어지지만 막힘 해소용)
+            };
+        }
+        // 같은 열
+        if (dx == 0 && goY != null) {
+            return new Direction[] {
+                    goY,             // 직진
+                    Direction.LEFT,  // 우회
+                    Direction.RIGHT, // 우회
+                    backY            // 마지막 수단
+            };
+        }
+        // 대각선 관계: 주축 -> 보조축 -> 보조축 반대 -> 주축 반대
+        return new Direction[] {
+                goX, goY,
+                backY, backX
+        };
     }
 }
