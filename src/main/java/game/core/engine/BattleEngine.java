@@ -50,25 +50,23 @@ public final class BattleEngine {
         int turn = 1;
 
         while (true) {
-            // Player Turn
             view.printBoard(board, units);
             System.out.printf("=== Turn %d : PLAYER ===%n", turn);
             boolean keep = playerSingleAction();
             if (!keep) break;
             if (victory.isOver(turn, units)) break;
 
-            // Enemy Turn
             System.out.printf("=== Turn %d : ENEMY ===%n", turn);
             enemyAi.takeTurn(board, units);
             if (victory.isOver(turn, units)) break;
 
-            // End of Turn rules
             fatigue.applyEndOfTurn(turn, units);
 
-            // 모든 유닛: 스킬 쿨다운 / 은신 지속 감소
+            // 쿨다운/은신/도발 지속 감소
             for (var u : units) {
                 u.tickCooldown();
                 u.tickStealth();
+                u.tickTaunt();
             }
 
             // 3턴마다 리쿠르팅
@@ -134,7 +132,6 @@ public final class BattleEngine {
         }
 
         if (act.equalsIgnoreCase("skill")) {
-            // 스킬 목록 출력 및 선택
             var skills = me.role().skills();
             if (skills.isEmpty()) {
                 System.out.println("이 역할은 사용 가능한 스킬이 없습니다.");
@@ -157,27 +154,24 @@ public final class BattleEngine {
                 return true;
             }
 
-            // 타겟 입력 (Smoke Bomb은 빈 입력 허용)
-            String tgt = input.input("스킬 대상 좌표 (예: x,y) / Smoke Bomb은 Enter:");
+            String tgt = input.input("스킬 대상 좌표 (예: x,y) / 자기대상 스킬은 Enter:");
             Position tp = null;
             if (tgt != null && !tgt.trim().isEmpty()) {
                 try { tp = Position.parse(tgt); }
                 catch (Exception e) { System.out.println("좌표 형식 오류"); return true; }
             }
-            if (tp == null) tp = me.position(); // 자기대상/무시형 스킬 대비
+            if (tp == null) tp = me.position();
 
             if (!sk.canUse(me, board, units, tp)) {
                 System.out.println("스킬 사용 불가 (사거리/대상 조건)");
                 return true;
             }
 
-            // MP 소비
             if (!me.stats().consumeMana(sk.mpCost())) {
                 System.out.println("MP가 부족합니다.");
                 return true;
             }
 
-            // 스킬 발동 + 쿨다운 부여
             sk.use(me, board, units, tp);
             me.startSkillCooldown(sk);
             return true;
