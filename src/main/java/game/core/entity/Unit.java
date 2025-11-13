@@ -11,10 +11,14 @@ public final class Unit {
     private final Stats stats;
     private Position position;
 
+    // 스킬 쿨다운
     private int skillCooldownRemaining = 0;
 
-    // 은신 지속 턴
+    // 은신 지속
     private int stealthTurnRemaining = 0;
+
+    // 도발 지속
+    private int tauntTurnRemaining = 0;
 
     public Unit(String name, Role role, TeamSide side, Stats stats, Position position) {
         this.name = Objects.requireNonNull(name);
@@ -36,29 +40,31 @@ public final class Unit {
 
     public boolean isDead() { return stats.isDead(); }
 
-    // 은신 여부 확인
+    // Stealth (은신)
     public boolean isStealthed() {
         return stealthTurnRemaining > 0;
     }
-
-    // 은신 적용
     public void applyStealth(int duration) {
         stealthTurnRemaining = duration;
     }
-
-    // 턴 종료마다 은신 감소
     public void tickStealth() {
         if (stealthTurnRemaining > 0) stealthTurnRemaining--;
     }
 
+    // Taunt (도발)
+    public boolean isTaunting() { return tauntTurnRemaining > 0; }
+    public void applyTaunt(int duration) { tauntTurnRemaining = duration; }
+    public void tickTaunt() {
+        if (tauntTurnRemaining > 0) tauntTurnRemaining--;
+    }
+
+    // Skill cooldown
     public boolean isSkillReady(game.core.skill.Skill skill) {
         return skillCooldownRemaining == 0 && stats.hasMana(skill.mpCost());
     }
-
     public void startSkillCooldown(game.core.skill.Skill skill) {
         this.skillCooldownRemaining = Math.max(this.skillCooldownRemaining, skill.cooldown());
     }
-
     public void tickCooldown() {
         if (skillCooldownRemaining > 0) skillCooldownRemaining--;
     }
