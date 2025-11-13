@@ -34,33 +34,51 @@ public final class EnemyAiService {
     }
 
     private void actSingleEnemy(Board board, List<Unit> all, Unit enemy) {
-        // 인접한 플레이어(은신 제외) 중 HP 낮은 대상
+        Optional<Unit> tauntTarget = all.stream()
+                .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && u.isTaunting())
+                .findFirst();
+
+        if (tauntTarget.isPresent()) {
+            Unit t = tauntTarget.get();
+            // 인접하면 즉시 공격
+            if (enemy.position().manhattanDistance(t.position()) == 1) {
+                attack.basicAttack(enemy, t);
+                return;
+            }
+            // 인접 아니면 도발 대상에게 접근
+            moveOneStepToward(board, all, enemy, t.position());
+            return;
+        }
+
+        // 은신 제외, 인접한 대상 우선
         Optional<Unit> adjacent = all.stream()
                 .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && !u.isStealthed())
                 .filter(u -> enemy.position().manhattanDistance(u.position()) == 1)
                 .min(Comparator.comparingInt(u -> u.stats().hp()));
+
         if (adjacent.isPresent()) {
             attack.basicAttack(enemy, adjacent.get());
             return;
         }
 
-        // 가장 가까운 플레이어(은신 제외)에게 접근
         Optional<Unit> nearest = all.stream()
                 .filter(u -> !u.isDead() && u.side() == TeamSide.PLAYER && !u.isStealthed())
                 .min(Comparator.comparingInt(u -> enemy.position().manhattanDistance(u.position())));
         if (nearest.isEmpty()) return;
 
-        Position from = enemy.position();
-        Position to = nearest.get().position();
-        Direction[] tryDirs = stepOrder(from, to);
+        moveOneStepToward(board, all, enemy, nearest.get().position());
+    }
 
+    private void moveOneStepToward(Board board, List<Unit> all, Unit mover, Position to) {
+        Position from = mover.position();
+        Direction[] tryDirs = stepOrder(from, to);
         for (Direction d : tryDirs) {
             if (d == null) continue;
             Position next = Position.of(from.x() + d.dx, from.y() + d.dy);
             boolean inside = board.isInside(next);
             boolean occupied = all.stream().anyMatch(u -> !u.isDead() && u.position().equals(next));
             if (inside && !occupied) {
-                movement.move(board, all, enemy, d);
+                movement.move(board, all, mover, d);
                 break;
             }
         }
