@@ -21,12 +21,12 @@ public final class Unit {
     // 바디블록(보호/넉백저항)
     private int bodyBlockTurnRemaining = 0;
 
-    // Valor(용기) 버프: 임시 공격력 증가 + 피해 경감
+    // Valor(용기) 버프
     private int valorTurnRemaining = 0;
-    private int valorAtkBonus = 0;          // 가산 공격력
-    private double valorDamageReduce = 0.0;  // 0.2 = 20% 경감
+    private int valorAtkBonus = 0;
+    private double valorDamageReduce = 0.0;
 
-    // Heal 대체: 보호막(Shield) (지속 턴 동안 피해 흡수)
+    // Shield(보호막)
     private int shieldTurnRemaining = 0;
     private int shieldAmount = 0;
 
@@ -38,15 +38,13 @@ public final class Unit {
         this.position = Objects.requireNonNull(position);
     }
 
-    public String name() { return name; }
-    public Role role() { return role; }
-    public TeamSide side() { return side; }
-    public Stats stats() { return stats; }
-    public Position position() { return position; }
+    public String name()      { return name; }
+    public Role role()        { return role; }
+    public TeamSide side()    { return side; }
+    public Stats stats()      { return stats; }
+    public Position position(){ return position; }
 
-    public void moveTo(Position p) {
-        this.position = Objects.requireNonNull(p);
-    }
+    public void moveTo(Position p) { this.position = Objects.requireNonNull(p); }
 
     public boolean isDead() { return stats.isDead(); }
 
@@ -82,23 +80,29 @@ public final class Unit {
         }
     }
 
-    public boolean hasShield() { return shieldTurnRemaining > 0 && shieldAmount > 0; }
-    public int shieldAmount() { return hasShield() ? shieldAmount : 0; }
+    public boolean hasShield() { return shieldTurnRemaining > 0; }
+    public int shieldAmount() { return Math.max(0, shieldAmount); }
+
     public void applyShield(int amount, int duration) {
-        this.shieldAmount = Math.max(0, amount);
-        this.shieldTurnRemaining = duration;
+        this.shieldAmount += Math.max(0, amount);
+        this.shieldTurnRemaining = Math.max(this.shieldTurnRemaining, duration);
     }
 
     public int absorbDamage(int incoming) {
         if (incoming <= 0) return 0;
-        if (!hasShield()) return incoming;
+        if (shieldAmount <= 0) return incoming;
         int absorbed = Math.min(shieldAmount, incoming);
         shieldAmount -= absorbed;
         return incoming - absorbed;
     }
+
     public void tickShield() {
-        if (shieldTurnRemaining > 0) shieldTurnRemaining--;
-        if (shieldTurnRemaining == 0) shieldAmount = 0;
+        if (shieldTurnRemaining > 0) {
+            shieldTurnRemaining--;
+            if (shieldTurnRemaining == 0) {
+                shieldAmount = 0;
+            }
+        }
     }
 
     public boolean isSkillReady(game.core.skill.Skill skill) {
