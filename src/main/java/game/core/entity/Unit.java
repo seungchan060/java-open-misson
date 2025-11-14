@@ -14,14 +14,21 @@ public final class Unit {
     // 스킬 쿨다운
     private int skillCooldownRemaining = 0;
 
-    // 은신 지속(연막탄)
+    // 은신(연막)
     private int stealthTurnRemaining = 0;
-
-    // 도발 지속(탱커 Taunt)
+    // 도발(탱커)
     private int tauntTurnRemaining = 0;
-
-    // 바디블록 지속(보호/넉백저항)
+    // 바디블록(보호/넉백저항)
     private int bodyBlockTurnRemaining = 0;
+
+    // Valor(용기) 버프: 임시 공격력 증가 + 피해 경감
+    private int valorTurnRemaining = 0;
+    private int valorAtkBonus = 0;          // 가산 공격력
+    private double valorDamageReduce = 0.0;  // 0.2 = 20% 경감
+
+    // Heal 대체: 보호막(Shield) (지속 턴 동안 피해 흡수)
+    private int shieldTurnRemaining = 0;
+    private int shieldAmount = 0;
 
     public Unit(String name, Role role, TeamSide side, Stats stats, Position position) {
         this.name = Objects.requireNonNull(name);
@@ -58,7 +65,42 @@ public final class Unit {
     public void applyBodyBlock(int duration) { bodyBlockTurnRemaining = duration; }
     public void tickBodyBlock() { if (bodyBlockTurnRemaining > 0) bodyBlockTurnRemaining--; }
 
-    // ----- Skill cooldown -----
+    // ----- Valor (임시 버프) -----
+    public boolean hasValor() { return valorTurnRemaining > 0; }
+    public int valorAtkBonus() { return hasValor() ? valorAtkBonus : 0; }
+    public double valorDamageReduce() { return hasValor() ? valorDamageReduce : 0.0; }
+    public void applyValor(int duration, int atkBonus, double damageReduce) {
+        this.valorTurnRemaining = duration;
+        this.valorAtkBonus = Math.max(0, atkBonus);
+        this.valorDamageReduce = Math.max(0.0, Math.min(0.9, damageReduce));
+    }
+    public void tickValor() {
+        if (valorTurnRemaining > 0) valorTurnRemaining--;
+        if (valorTurnRemaining == 0) {
+            valorAtkBonus = 0;
+            valorDamageReduce = 0.0;
+        }
+    }
+
+    public boolean hasShield() { return shieldTurnRemaining > 0 && shieldAmount > 0; }
+    public int shieldAmount() { return hasShield() ? shieldAmount : 0; }
+    public void applyShield(int amount, int duration) {
+        this.shieldAmount = Math.max(0, amount);
+        this.shieldTurnRemaining = duration;
+    }
+
+    public int absorbDamage(int incoming) {
+        if (incoming <= 0) return 0;
+        if (!hasShield()) return incoming;
+        int absorbed = Math.min(shieldAmount, incoming);
+        shieldAmount -= absorbed;
+        return incoming - absorbed;
+    }
+    public void tickShield() {
+        if (shieldTurnRemaining > 0) shieldTurnRemaining--;
+        if (shieldTurnRemaining == 0) shieldAmount = 0;
+    }
+
     public boolean isSkillReady(game.core.skill.Skill skill) {
         return skillCooldownRemaining == 0 && stats.hasMana(skill.mpCost());
     }
