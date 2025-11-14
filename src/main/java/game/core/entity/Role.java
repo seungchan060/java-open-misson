@@ -3,14 +3,13 @@ package game.core.entity;
 import game.core.skill.*;
 import java.util.List;
 
-/** 직업과 보유 스킬 목록 매핑 (여러 스킬 지원) */
 public enum Role {
 
     KNIGHT(new ShieldBash()),
     ROGUE(new Backstab(), new SmokeBomb()),
     ARCHER(new PiercingShot()),
     MAGE(new Fireball()),
-    MONK(),
+    MONK(new HealShield(), new Valor()),
     TANK(new Taunt(), new BodyBlock());
 
     private final List<Skill> skills;
