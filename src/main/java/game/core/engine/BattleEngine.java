@@ -56,6 +56,7 @@ public final class BattleEngine {
             if (victory.isOver(turn, units)) { ContextUnitsHolder.close(); break; }
 
             System.out.printf("=== Turn %d : ENEMY ===%n", turn);
+            enemyAi.beginEnemyPhase();
             enemyAi.takeTurn(board, units);
             if (victory.isOver(turn, units)) { ContextUnitsHolder.close(); break; }
 
