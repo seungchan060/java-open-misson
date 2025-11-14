@@ -9,14 +9,24 @@ public final class AttackService {
     public void basicAttack(Unit attacker, Unit defender) {
         if (attacker.isDead() || defender.isDead()) return;
 
-        int raw = attacker.stats().atk(); // 기본 공격력
+        // 공격력 계산
+        int raw = attacker.stats().atk() + attacker.valorAtkBonus();
 
-        double factor = 1.0 - nearestBodyBlockProtection(defender, attacker); // 0.3이면 70%로
-        int adjusted = Math.max(1, (int)Math.floor(raw * factor));
+        // BodyBlock 보호(피격자 인접 탱커) 적용
+        double reduceFromBodyBlock = nearestBodyBlockProtection(defender);
+        int afterBodyBlock = Math.max(0, (int)Math.floor(raw * (1.0 - reduceFromBodyBlock)));
 
-        defender.stats().applyDamage(adjusted);
+        // Defender 보호막으로 흡수
+        int afterShield = defender.absorbDamage(afterBodyBlock);
 
-        System.out.printf("⚔%s → %s 공격! (남은 HP: %d)%n",
+        // Defender Valor 경감
+        double reduceFromValor = defender.valorDamageReduce();
+        int finalDamage = Math.max(1, (int)Math.floor(afterShield * (1.0 - reduceFromValor)));
+
+        // HP 적용
+        defender.stats().applyDamage(finalDamage);
+
+        System.out.printf("%s → %s 공격! (남은 HP: %d)%n",
                 attacker.name(), defender.name(), defender.stats().hp());
 
         if (defender.isDead()) {
@@ -24,7 +34,7 @@ public final class AttackService {
         }
     }
 
-    private double nearestBodyBlockProtection(Unit defender, Unit attacker) {
+    private double nearestBodyBlockProtection(Unit defender) {
         List<Unit> all = ContextUnitsHolder.currentUnits();
         if (all == null) return 0.0;
 
