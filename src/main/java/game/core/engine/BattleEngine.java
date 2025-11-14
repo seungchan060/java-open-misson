@@ -66,6 +66,8 @@ public final class BattleEngine {
                 u.tickStealth();
                 u.tickTaunt();
                 u.tickBodyBlock();
+                u.tickValor();
+                u.tickShield();
             }
 
             if (turn % 3 == 0) {
