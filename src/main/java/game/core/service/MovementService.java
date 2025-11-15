@@ -8,25 +8,27 @@ import game.core.entity.Unit;
 import java.util.List;
 
 public final class MovementService {
+    public boolean move(Board board, List<Unit> units, Unit unit, Direction direction) {
 
-    public void move(Board board, List<Unit> units, Unit unit, Direction direction) {
-        Position newPos = Position.of(unit.position().x() + direction.dx,
-                unit.position().y() + direction.dy);
+        Position cur = unit.position();
+        Position next = Position.of(
+                cur.x() + direction.dx,
+                cur.y() + direction.dy
+        );
 
-        // 경계 체크
-        if (!board.isInside(newPos)) {
+        if (!board.isInside(next)) {
             System.out.println("보드 밖으로 이동할 수 없습니다.");
-            return;
+            return false;
         }
 
-        // 이미 다른 유닛이 해당 칸에 있는지 체크
-        boolean occupied = units.stream()
-                .anyMatch(u -> !u.isDead() && u.position().equals(newPos));
-        if (occupied) {
-            System.out.println("해당 위치는 이미 다른 유닛이 차지하고 있습니다.");
-            return;
+        for (Unit u : units) {
+            if (!u.isDead() && u.position().equals(next)) {
+                System.out.println("해당 칸은 이미 다른 유닛이 차지하고 있습니다.");
+                return false;
+            }
         }
 
-        unit.moveTo(newPos);
+        unit.moveTo(next);
+        return true;
     }
 }
