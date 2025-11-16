@@ -50,6 +50,7 @@ public final class BattleEngine {
             ContextUnitsHolder.open(units);
 
             view.printBoard(board, units);
+            view.printStatus(units);
             System.out.printf("=== Turn %d : PLAYER ===%n", turn);
             boolean keep = playerSingleAction();
             if (!keep) { ContextUnitsHolder.close(); break; }
